@@ -1,0 +1,10 @@
+[package]
+name = "matrix_mult"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+matrix = { path = "../matrix" }
+matrix_ops = { path = "../matrix_ops" }
+lalgebra_scalar = { path = "../lalgebra_scalar" }
+
