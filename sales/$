@@ -1,0 +1,65 @@
+pub mod lib;
+#[derive(Debug, Clone, PartialEq)]
+pub struct Store {
+    pub products: Vec<(String, f32)>,
+}
+
+impl Store {
+    pub fn new(products: Vec<(String, f32)>) -> Store {
+        Store { products }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Cart {
+    pub items: Vec<(String, f32)>,
+    pub receipt: Vec<f32>,
+}
+
+impl Cart {
+    /// Create a new empty cart
+    pub fn new() -> Cart {
+        Cart {
+            items: Vec::new(),
+            receipt: Vec::new(),
+        }
+    }
+
+    /// Insert an item from the store into the cart
+    pub fn insert_item(&mut self, s: &Store, ele: String) {
+        if let Some((name, price)) = s.products.iter().find(|(n, _)| *n == ele) {
+            self.items.push((name.clone(), *price));
+        }
+    }
+
+    /// Generate receipt with discounts applied
+    pub fn generate_receipt(&mut self) -> Vec<f32> {
+        let mut prices: Vec<f32> = self.items.iter().map(|(_, p)| *p).collect();
+        prices.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        let mut receipt = Vec::new();
+
+        // process items in chunks of 3
+        for chunk in prices.chunks(3) {
+            if chunk.len() < 3 {
+                // less than 3 items -> no discount
+                receipt.extend(chunk.iter().map(|&x| round2(x)));
+            } else {
+                // cheapest is free → spread discount across all 3
+                let cheapest = chunk.iter().cloned().fold(f32::INFINITY, f32::min);
+                let discount_per_item = cheapest / 3.0;
+
+                receipt.extend(chunk.iter().map(|&x| round2(x - discount_per_item)));
+            }
+        }
+
+        receipt.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        self.receipt = receipt.clone();
+        receipt
+    }
+}
+
+/// Helper to round floats to 2 decimal places
+fn round2(x: f32) -> f32 {
+    (x * 100.0).round() / 100.0
+}
